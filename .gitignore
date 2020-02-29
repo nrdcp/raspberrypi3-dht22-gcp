@@ -1,5 +1,5 @@
 node_modules
 
-src/certs
+certs/*
 
 .DS_Store
