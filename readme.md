@@ -3,5 +3,6 @@
 ### Project TODO
 fix linting
 code refactoring
+add command to package.json
 await/async version
 run on PI3 boot
