@@ -6,15 +6,20 @@ const deviceId = 'pi3-dht22-node';
 const messageType = 'state'; // or event
 
 const config = {
-  mqttHost: 'mqtt.googleapis.com',
-  mqttPort: 8883,
+  mqtt: {
+    clientId: `projects/${projectId}/locations/${cloudRegion}/registries/${registryId}/devices/${deviceId}`,
+    host: 'mqtt.googleapis.com',
+    port: 8883,
+    topic: `/devices/${deviceId}/${messageType}`,
+  },
+  jwt: {
+    TTLMins: 0.5,
+  },
   privateKeyFile: '../certs/rsa_private.pem',
-  tokenExpMins: 0.5,
   deviceId,
-  mqttClientId: `projects/${projectId}/locations/${cloudRegion}/registries/${registryId}/devices/${deviceId}`,
-  mqttTopic: `/devices/${deviceId}/${messageType}`,
   projectId,
-  transmissionTimeoutSec: 20,
+  transmissionTimeoutSec: 10,
+  debug: true,
 };
 
 module.exports = config;

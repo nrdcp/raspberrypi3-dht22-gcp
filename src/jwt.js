@@ -7,7 +7,7 @@ const config = require('./config');
 module.exports.createJwtToken = ({ iatTime }) => {
   const token = {
     iat: iatTime,
-    exp: iatTime + config.tokenExpMins * 60,
+    exp: iatTime + config.jwt.TTLMins * 60,
     aud: config.projectId,
   };
 
@@ -17,3 +17,4 @@ module.exports.createJwtToken = ({ iatTime }) => {
     algorithm: 'RS256',
   });
 };
+
