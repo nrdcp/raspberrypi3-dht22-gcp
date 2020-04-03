@@ -28,6 +28,7 @@ class MqttClient {
       password: jwtToken,
       protocol: 'mqtts',
       secureProtocol: 'TLSv1_2_method',
+      keepalive: 60 * 45,
     };
 
     debug('connecting...');
