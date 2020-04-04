@@ -70,7 +70,6 @@ class MqttClient {
       this.publishInProgress = false;
       debug('MQTT: setting publishInProgress = false');
       debug('MQTT: client closed.');
-      this.createClientConnection();
     });
   }
 
@@ -87,11 +86,12 @@ class MqttClient {
   }
 
   prePublish(message) {
-    debug(`MQTT: checking token age ${message.time}`);
+    debug(`MQTT: checking token age`);
     const tokenAgeSec = parseInt((Date.now() / 1000), 10) - this.tokenIssuedAtTime;
     if (tokenAgeSec > config.jwt.TTLMins * 60) {
       debug(`MQTT: refreshing token after ${tokenAgeSec} seconds.`);
       this.client.end();
+      this.createClientConnection();
     } else {
       this.publish(message);
     }

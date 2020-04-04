@@ -11,7 +11,7 @@ const config = {
     topic: `/devices/${deviceId}/state`,
   },
   jwt: {
-    TTLMins: 20,
+    TTLMins: 15,
   },
   privateKeyFile: '../certs/rsa_private.pem',
   deviceId,
