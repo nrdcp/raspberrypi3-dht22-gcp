@@ -1,6 +1,6 @@
 /* eslint-disable import/no-unresolved */
 const fs = require('fs');
-const path = require("path");
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const config = require('./config');
 
@@ -17,4 +17,3 @@ module.exports.createJwtToken = ({ iatTime }) => {
     algorithm: 'RS256',
   });
 };
-

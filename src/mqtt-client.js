@@ -1,14 +1,14 @@
 /* eslint-disable no-console, import/no-unresolved */
+const debug = require('debug')('mqtt-client');
 const mqtt = require('mqtt');
 const config = require('./config');
 const { createJwtToken } = require('./jwt');
-const { debug } = require('./debug');
 
 class MqttClient {
   constructor() {
-    this.client;
+    this.client = null;
     this.clientReady = false;
-    this.tokenIssuedAtTime;
+    this.tokenIssuedAtTime = 0;
     this.publishInProgress = false;
     this.queue = [];
 
@@ -38,7 +38,6 @@ class MqttClient {
   }
 
   setListeners() {
-    // Subscribe to the /devices/{device-id}/config topic to receive config updates.
     this.client.subscribe(`/devices/${config.deviceId}/config`);
 
     this.client.on('error', (err) => {
@@ -79,7 +78,7 @@ class MqttClient {
 
   getIsTokenValid() {
     let isValid = true;
-    debug(`MQTT: checking token age`);
+    debug('MQTT: checking token age');
     const tokenAgeSec = parseInt((Date.now() / 1000), 10) - this.tokenIssuedAtTime;
     if (tokenAgeSec > config.jwt.TTLMins * 60) {
       debug(`MQTT: refreshing token after ${tokenAgeSec} seconds.`);
@@ -104,22 +103,22 @@ class MqttClient {
   }
 
   removeFromQueue(message) {
-    this.queue = this.queue.filter(queueMessage => queueMessage.time !== message.time);
+    this.queue = this.queue.filter((queueMessage) => queueMessage.time !== message.time);
   }
 
   publish(message) {
     debug(`MQTT: publishing ${message.time}`);
     const payload = JSON.stringify(message);
 
-    this.client.publish(config.mqtt.topic, payload, { qos: 1 });
+    if (!message.isFake) {
+      this.client.publish(config.mqtt.topic, payload, { qos: 1 });
+    }
 
     this.removeFromQueue(message);
 
     if (this.queue.length) {
       debug(`queue size is ${this.queue.length}`);
-      setTimeout(() => {
-        this.publishNextQueuedMessage
-      }, 1000);
+      setTimeout(() => this.publishNextQueuedMessage, 1000);
     } else {
       debug('MQTT: setting publishInProgress = false');
       this.publishInProgress = false;
@@ -128,7 +127,7 @@ class MqttClient {
 
   pushMessageToQueue({ message }) {
     debug(`MQTT: pushing to queue ${message.time}`);
-    
+
     this.queue.push(message);
 
     if (this.clientReady && !this.publishInProgress) {

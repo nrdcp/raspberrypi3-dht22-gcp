@@ -1,8 +1,8 @@
 /* eslint-disable no-console, no-use-before-define, import/no-unresolved */
+const debug = require('debug')('sensor');
 const config = require('./config');
-const MqttClient = require('./mqttClient');
+const MqttClient = require('./mqtt-client');
 const DhtSensor = require('./dht-sensor');
-const { debug } = require('./debug');
 
 const dhtSensor = new DhtSensor();
 const mqttClient = new MqttClient();

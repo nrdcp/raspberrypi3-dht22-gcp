@@ -17,7 +17,7 @@ const config = {
   deviceId,
   projectId,
   transmissionTimeoutSec: 60 * 10,
-  debug: true,
+  useFakeSensor: false,
 };
 
 module.exports = config;
