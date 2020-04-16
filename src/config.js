@@ -16,7 +16,7 @@ const config = {
   privateKeyFile: '../certs/rsa_private.pem',
   deviceId,
   projectId,
-  transmissionTimeoutSec: 60 * 5,
+  transmissionTimeoutSec: 60 * 10,
   debug: true,
 };
 

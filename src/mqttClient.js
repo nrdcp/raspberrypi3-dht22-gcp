@@ -43,6 +43,10 @@ class MqttClient {
 
     this.client.on('error', (err) => {
       debug('error', err);
+      if (!this.getIsTokenValid()) {
+        this.client.end();
+        this.createClientConnection();
+      }
     });
 
     this.client.on('message', (topic, message) => {
@@ -73,28 +77,34 @@ class MqttClient {
     });
   }
 
+  getIsTokenValid() {
+    let isValid = true;
+    debug(`MQTT: checking token age`);
+    const tokenAgeSec = parseInt((Date.now() / 1000), 10) - this.tokenIssuedAtTime;
+    if (tokenAgeSec > config.jwt.TTLMins * 60) {
+      debug(`MQTT: refreshing token after ${tokenAgeSec} seconds.`);
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
   publishNextQueuedMessage() {
     if (this.queue.length) {
       debug(`queue size is ${this.queue.length}`);
       const message = { ...this.queue[0] };
-      this.prePublish(message);
+
+      if (this.getIsTokenValid()) {
+        this.publish(message);
+      } else {
+        this.client.end();
+        this.createClientConnection();
+      }
     }
   }
 
   removeFromQueue(message) {
     this.queue = this.queue.filter(queueMessage => queueMessage.time !== message.time);
-  }
-
-  prePublish(message) {
-    debug(`MQTT: checking token age`);
-    const tokenAgeSec = parseInt((Date.now() / 1000), 10) - this.tokenIssuedAtTime;
-    if (tokenAgeSec > config.jwt.TTLMins * 60) {
-      debug(`MQTT: refreshing token after ${tokenAgeSec} seconds.`);
-      this.client.end();
-      this.createClientConnection();
-    } else {
-      this.publish(message);
-    }
   }
 
   publish(message) {
@@ -107,7 +117,9 @@ class MqttClient {
 
     if (this.queue.length) {
       debug(`queue size is ${this.queue.length}`);
-      setTimeout(this.publishNextQueuedMessage, 1000);
+      setTimeout(() => {
+        this.publishNextQueuedMessage
+      }, 1000);
     } else {
       debug('MQTT: setting publishInProgress = false');
       this.publishInProgress = false;
