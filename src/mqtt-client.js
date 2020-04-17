@@ -1,4 +1,4 @@
-/* eslint-disable no-console, import/no-unresolved */
+/* eslint-disable no-console, import/no-unresolved, class-methods-use-this */
 const debug = require('debug')('mqtt-client');
 const mqtt = require('mqtt');
 const config = require('./config');
@@ -16,7 +16,7 @@ class MqttClient {
   }
 
   createClientConnection() {
-    const issuedAtTime = parseInt((Date.now() / 1000), 10);
+    const issuedAtTime = this.getTimestamp();
     const jwtToken = createJwtToken({ iatTime: issuedAtTime });
 
     const connectionArgs = {
@@ -40,46 +40,56 @@ class MqttClient {
   setListeners() {
     this.client.subscribe(`/devices/${config.deviceId}/config`);
 
-    this.client.on('error', (err) => {
-      debug('error', err);
-      if (!this.getIsTokenValid()) {
-        this.client.end();
-        this.createClientConnection();
+    this.client.on('error', this.onErrorHandler);
+    this.client.on('message', this.onMessageHandler);
+    this.client.on('connect', this.onConnectHandler);
+    this.client.on('close', this.onCloseHandler);
+  }
+
+  onConnectHandler(success) {
+    if (success) {
+      debug('Client connected...');
+      this.clientReady = true;
+
+      if (!this.publishInProgress) {
+        debug('MQTT: setting publishInProgress = true');
+        this.publishInProgress = true;
+        this.publishNextQueuedMessage();
       }
-    });
-
-    this.client.on('message', (topic, message) => {
-      debug(topic, 'message received: ', Buffer.from(message, 'base64').toString('ascii'));
-    });
-
-    this.client.on('connect', (success) => {
-      if (success) {
-        debug('Client connected...');
-        this.clientReady = true;
-
-        if (!this.publishInProgress) {
-          debug('MQTT: setting publishInProgress = true');
-          this.publishInProgress = true;
-          this.publishNextQueuedMessage();
-        }
-      } else {
-        this.clientReady = false;
-        debug('Client not connected...');
-      }
-    });
-
-    this.client.on('close', () => {
+    } else {
       this.clientReady = false;
-      this.publishInProgress = false;
-      debug('MQTT: setting publishInProgress = false');
-      debug('MQTT: client closed.');
-    });
+      debug('Client not connected...');
+    }
+  }
+
+  onCloseHandler() {
+    this.clientReady = false;
+    this.publishInProgress = false;
+    debug('MQTT: setting publishInProgress = false');
+    debug('MQTT: client closed.');
+  }
+
+  onMessageHandler(topic, message) {
+    debug(topic, 'message received: ', Buffer.from(message, 'base64').toString('ascii'));
+  }
+
+  onErrorHandler(error) {
+    debug('error', error);
+
+    if (!this.getIsTokenValid()) {
+      this.client.end();
+      this.createClientConnection();
+    }
+  }
+
+  getTimestamp() {
+    return parseInt((Date.now() / 1000), 10);
   }
 
   getIsTokenValid() {
     let isValid = true;
     debug('MQTT: checking token age');
-    const tokenAgeSec = parseInt((Date.now() / 1000), 10) - this.tokenIssuedAtTime;
+    const tokenAgeSec = this.getTimestamp() - this.tokenIssuedAtTime;
     if (tokenAgeSec > config.jwt.TTLMins * 60) {
       debug(`MQTT: refreshing token after ${tokenAgeSec} seconds.`);
       isValid = false;
@@ -102,10 +112,6 @@ class MqttClient {
     }
   }
 
-  removeFromQueue(message) {
-    this.queue = this.queue.filter((queueMessage) => queueMessage.time !== message.time);
-  }
-
   publish(message) {
     debug(`MQTT: publishing ${message.time}`);
     const payload = JSON.stringify(message);
@@ -114,7 +120,7 @@ class MqttClient {
       this.client.publish(config.mqtt.topic, payload, { qos: 1 });
     }
 
-    this.removeFromQueue(message);
+    this.dequeueMessage(message);
 
     if (this.queue.length) {
       debug(`queue size is ${this.queue.length}`);
@@ -125,7 +131,7 @@ class MqttClient {
     }
   }
 
-  pushMessageToQueue({ message }) {
+  enqueueMessage({ message }) {
     debug(`MQTT: pushing to queue ${message.time}`);
 
     this.queue.push(message);
@@ -135,6 +141,10 @@ class MqttClient {
       this.publishInProgress = true;
       this.publishNextQueuedMessage();
     }
+  }
+
+  dequeueMessage(message) {
+    this.queue = this.queue.filter((queueMessage) => queueMessage.time !== message.time);
   }
 }
 

@@ -7,12 +7,17 @@ class DhtSensor {
     nodeDhtSensor.initialize(22, 2); // `2` => GPIO2
   }
 
+  getReadingTime() {
+    // https://stackoverflow.com/a/11150727/1015046
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  }
+
   fetchData() {
     if (config.useFakeSensor) {
       return {
         temp: '20.0',
         humd: '50.0',
-        time: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        time: this.getReadingTime(),
         isFake: true,
       };
     }
@@ -24,7 +29,7 @@ class DhtSensor {
     return {
       temp,
       humd,
-      time: new Date().toISOString().slice(0, 19).replace('T', ' '), // https://stackoverflow.com/a/11150727/1015046
+      time: this.getReadingTime(),
     };
   }
 }

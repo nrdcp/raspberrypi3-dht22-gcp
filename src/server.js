@@ -11,7 +11,7 @@ function sendSensorData() {
   const sensorData = dhtSensor.fetchData();
   debug(`Got a sensor reading. Next reading in ${config.transmissionTimeoutSec} seconds`);
 
-  mqttClient.pushMessageToQueue({ message: sensorData });
+  mqttClient.enqueueMessage({ message: sensorData });
 
   setTimeout(sendSensorData, config.transmissionTimeoutSec * 1000);
 }
