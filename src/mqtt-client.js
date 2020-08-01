@@ -40,10 +40,10 @@ class MqttClient {
   setListeners() {
     this.client.subscribe(`/devices/${config.deviceId}/config`);
 
-    this.client.on('error', this.onErrorHandler);
-    this.client.on('message', this.onMessageHandler);
-    this.client.on('connect', this.onConnectHandler);
-    this.client.on('close', this.onCloseHandler);
+    this.client.on('error', this.onErrorHandler.bind(this));
+    this.client.on('message', this.onMessageHandler.bind(this));
+    this.client.on('connect', this.onConnectHandler.bind(this));
+    this.client.on('close', this.onCloseHandler.bind(this));
   }
 
   onConnectHandler(success) {
@@ -124,7 +124,7 @@ class MqttClient {
 
     if (this.queue.length) {
       debug(`queue size is ${this.queue.length}`);
-      setTimeout(() => this.publishNextQueuedMessage, 1000);
+      setTimeout(() => this.publishNextQueuedMessage(), 1000);
     } else {
       debug('MQTT: setting publishInProgress = false');
       this.publishInProgress = false;
