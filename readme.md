@@ -10,7 +10,7 @@ Use [tmux](https://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/) to cre
 
 * In terminal run `tmux`
 
-* Start your app `npm run src/server.js`
+* Start your app `npm run start`
 
 * To detach tmux session (so your app does not stop running after SSH session is done with), `Ctrl+b`, then `d`
 
