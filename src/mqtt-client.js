@@ -114,6 +114,7 @@ class MqttClient {
 
   publish(message) {
     debug(`MQTT: publishing ${message.time}`);
+    console.log(`Publishing ${JSON.stringify(message)}`);
     const payload = JSON.stringify(message);
 
     if (!message.isFake) {
