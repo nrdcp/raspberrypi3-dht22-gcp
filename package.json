@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "debug": "^4.1.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "mqtt": "^3.0.0",
     "node-dht-sensor": "^0.3.0"
   },
